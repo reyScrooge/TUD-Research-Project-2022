@@ -109,7 +109,7 @@ class WorkloadAgent(BaselineAgent):
             state['rescuebot']['ignored'] = round(self._ignored / self._noSuggestions, 2)
             self._sendMessage('You ignored me ' + str(state['rescuebot']['ignored']), 'RescueBot')
         workloadRound = round(self._workloadVal, 2)
-        self._sendMessage('Your workload is: ' +  str(round(self._workload[0],2)) + ' ' + str(round(self._workload[1],2))
+        self._sendMessage('Your workload is ' +  str(round(self._workload[0],2)) + ' ' + str(round(self._workload[1],2))
                           + ' ' + str(round(self._workload[2],2)) + ' ' + str(round(self._workload[3],2)) + ' ' +
                           str(workloadRound), 'RescueBot')
 
