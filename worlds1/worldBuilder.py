@@ -17,6 +17,7 @@ from matrx.goals import WorldGoal
 from agents1.BaselineAgent import BaselineAgent
 from agents1.TutorialAgent import TutorialAgent
 from actions1.customActions import RemoveObjectTogether
+from agents1.WorkloadAgent import WorkloadAgent
 from brains1.HumanBrain import HumanBrain
 from loggers.action_logger import ActionLogger
 from datetime import datetime
@@ -82,6 +83,8 @@ def add_agents(builder, condition, exp_version):
         for agent_nr in range(nr_agents):
             if exp_version=="experiment" and condition=="baseline":
                 brain = BaselineAgent(slowdown=8)
+            if exp_version=="experiment" and condition=="workload":
+                brain = WorkloadAgent(slowdown=8)
             if exp_version=="trial" and condition=="tutorial":
                 brain = TutorialAgent(slowdown=8)
 

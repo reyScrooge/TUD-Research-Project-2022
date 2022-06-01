@@ -1,4 +1,4 @@
-from distutils.command.build import build
+# from distutils.command.build import build
 import os, requests
 import sys
 import csv
@@ -6,7 +6,7 @@ import glob
 import pathlib
 from SaR_gui import visualization_server
 from worlds1.worldBuilder import create_builder
-from typing import final, List, Dict, Final
+# from typing import final, List, Dict, Final
 from pathlib import Path
 
 if __name__ == "__main__":
@@ -24,7 +24,7 @@ if __name__ == "__main__":
             print()
             print()
             print()
-            builder = create_builder(exp_version=choice1,condition="baseline")
+            builder = create_builder(exp_version=choice1,condition=choice2)
         else:
             builder = create_builder(exp_version=choice1,condition=choice2)
 
