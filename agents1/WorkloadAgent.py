@@ -27,12 +27,14 @@ class WorkloadAgent(BaselineAgent):
         self._workload = [0,0,1/3,0]
         self._workloadVal = 0
         self._explanationChoice = 3
-        self._intsecond = 0
+
         self._humanLastWorkTick = 0
         self._humanWorkTime = 0
         self._humanLastTask = ''
         self._taskSwitch = 0
         self._min = 0
+        self._lastSec = 0
+
 
     def decide_on_bw4t_action(self, state: State):
         
@@ -42,16 +44,19 @@ class WorkloadAgent(BaselineAgent):
         self._computeWorkload()
         
         # print("WORKLOAD:", self._workload, self._workloadVal)
-        # print(self._taskSwitch, self._intsecond, self._humanLastTask)
+        # # print(self._taskSwitch, self._intsecond, self._humanLastTask)
+        # print(self._humanWorkTime, self._second, self._min)
 
         self._criticalFound = 0
         self._criticalRescued = 0
         for vic in self._foundVictims:
             if 'critical' in vic:
                 self._criticalFound += 1
+
         for vic in self._collectedVictims:
             if 'critical' in vic:
                 self._criticalRescued += 1
+
 
         if self._criticalFound == 1:
             self._vicString = 'victim'
@@ -1010,6 +1015,12 @@ class WorkloadAgent(BaselineAgent):
             if Phase.DROP_VICTIM == self._phase:
                 if 'mild' in self._goalVic:
                     self._sendMessage('Delivered ' + self._goalVic + ' at the drop zone.', 'RescueBot')
+                if 'critical' in self._goalVic:
+
+                    self._workload[3] = self._workload[3] -0.1
+                    if self._workload[3] < 0:
+                        self._workload[3] = 0
+
                 self._phase = Phase.FIND_NEXT_GOAL
                 self._currentDoor = None
                 self._tick = state['World']['nr_ticks']
@@ -1023,17 +1034,18 @@ class WorkloadAgent(BaselineAgent):
 
 
     def _computeWorkload(self):
-        point = np.array([self._workload[0], self._workload[1]])
-        origin = np.array([0,0])
-        point11 = np.array([1,1])
+        # point = np.array([self._workload[0], self._workload[1]])
+        # origin = np.array([0,0])
+        # point11 = np.array([1,1])
 
-        coognitiveLoad = ( np.linalg.norm(point-origin) -
-                           np.linalg.norm(np.cross(origin-point11, point11-point))/np.linalg.norm(origin-point11))\
-                         /np.sqrt(2)
+        # coognitiveLoad = ( np.linalg.norm(point-origin) -
+        #                    np.linalg.norm(np.cross(origin-point11, point11-point))/np.linalg.norm(origin-point11))\
+        #                  /np.sqrt(2)
 
+        cognitiveLoad = 0.2 * self._workload[0] + 0.8 * self._workload[1]
         affectiveLoad = 0.5 * self._workload[2] + 0.5 * self._workload[3]
 
-        self._workloadVal =  0.5 * coognitiveLoad + 0.5 * affectiveLoad
+        self._workloadVal =  0.5 * cognitiveLoad + 0.5 * affectiveLoad
 
         if self._workloadVal > 0.75:
             self._explanationChoice = 0
@@ -1048,37 +1060,47 @@ class WorkloadAgent(BaselineAgent):
 
 
     def _updateTimePressure(self):
-        second = int(0 if self._second is None else self._second)
-        if (second // 1) > self._intsecond:
-            self._intsecond += 1
-            self._workload[3] += 1/480
-            if self._workload[3] > 1:
-                self._workload[3] = 1
+        second = (0 if self._second is None else self._second)
+
+        if second > self._lastSec:
+
+            self._workload[3] += (second - self._lastSec)/480
+            self._lastSec = second
+        if self._workload[3] > 1:
+            self._workload[3] = 1
 
     def _changeWorkLoadMsg(self, msg):
         if msg == 'Remove' or 'Remove alone' or 'Remove together':
-            self._taskSwitch += 1
+            self._taskSwitch = self._taskSwitch + 1
             self._workload[2] = 2/3
             self._humanLastTask = 'remove'
 
         if msg == 'Rescue':
-            self._taskSwitch += 1
+            self._taskSwitch = self._taskSwitch + 1
             self._workload[2] = 3 / 3
             self._humanLastTask = 'rescue'
 
     def _updateTimeOccupied_TaskSeverity_TaskSwitch(self, state ):
+        self._second = int(0 if self._second is None else self._second)
+
+        if self._second > 0:
+            if self._second / 60 > self._min:
+                self._min += 1
+                self._taskSwitch = 0
+                self._humanWorkTime = 0
 
         if state[{'is_human_agent':True}]:
             if state['human'] is not None:
 
                 if state['human']['current_action'] is not None:
+
+
+
                     if self._humanLastWorkTick != state['human']['current_action_started_at_tick']:
                         self._humanLastWorkTick = state['human']['current_action_started_at_tick']
+
                         self._humanWorkTime += state['human']['current_action_duration'] / 10
-                        self._workload[0] = self._humanWorkTime/self._second
-                        # print(state['human']['current_action_duration'])
-                        # print(self._second)
-                        # print(self._humanWorkTime)
+                        self._workload[0] = self._humanWorkTime/60
 
                         if (state['human']['current_action'] == 'MoveSouthEast' or 'MoveWest' or 'MoveNorthEast'
                             or 'MoveSouth' or 'Move' or 'MoveEast' or 'MoveNorth'or 'MoveNorthWest'):
@@ -1091,10 +1113,7 @@ class WorkloadAgent(BaselineAgent):
                             current = 'rescue'
                             self._workload[2] = 1
 
-                        if self._intsecond > 0:
-                            if self._intsecond / 60 > self._min:
-                                self._min += 1
-                                self._taskSwitch = 0
+
 
                         if self._humanLastTask != current:
                             self._humanLastTask = current
@@ -1104,7 +1123,6 @@ class WorkloadAgent(BaselineAgent):
                             self._workload[1] = self._taskSwitch/ 6
                             if self._workload[1] > 1:
                                 self._workload[1] = 1
-
 
 
             # 'MoveSouthEast' or 'MoveWest' or 'MoveNorthEast' or 'MoveSouth' or 'Move' or 'MoveEast' or 'MoveNorth'or 'MoveNorthWest'
