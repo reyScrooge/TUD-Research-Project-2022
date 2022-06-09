@@ -1124,6 +1124,6 @@ class WorkloadAgent(BaselineAgent):
                             if self._workload[1] > 1:
                                 self._workload[1] = 1
 
-
+            
             # 'MoveSouthEast' or 'MoveWest' or 'MoveNorthEast' or 'MoveSouth' or 'Move' or 'MoveEast' or 'MoveNorth'or 'MoveNorthWest'
             # action_set': ['Drop', 'RemoveObject', 'MoveSouthWest', 'MoveSouthEast', 'DropObject', 'CloseDoorAction', 'MoveWest', 'MoveNorthEast', 'CarryObjectTogether', 'MoveSouth', 'Move', 'MoveEast', 'GrabObject', 'MoveNorth', 'DropObjectTogether', 'RemoveObjectTogether', 'Idle', 'MoveNorthWest', 'OpenDoorAction', 'CarryObject']
